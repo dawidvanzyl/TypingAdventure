@@ -37,7 +37,3 @@ Experimenting with:
 * AI as a rule-bound game engine
 * State compression via summarisation
 * Emergent narrative without hardcoded branching
-
-## License
-
-MIT
