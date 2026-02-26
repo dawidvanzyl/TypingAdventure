@@ -4,5 +4,6 @@
     <File Path="docs/PROJECT_BRIEF.md" />
   </Folder>
   <Project Path="Cerebras/Cerebras.csproj" Id="f04055dc-4eae-429e-8ca6-4acc577ceabd" />
+  <Project Path="TypingAdventure.Tests/TypingAdventure.Tests.csproj" />
   <Project Path="TypingAdventure/TypingAdventure.csproj" />
 </Solution>
