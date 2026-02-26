@@ -1,4 +1,4 @@
-﻿namespace Cerebras;
+﻿namespace Cerebras.SDK;
 
 public class CerebrasClientOptions
 {

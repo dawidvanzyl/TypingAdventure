@@ -1,4 +1,4 @@
-﻿namespace TypingAdventure;
+namespace Domain.Game;
 
 public class GameState
 {

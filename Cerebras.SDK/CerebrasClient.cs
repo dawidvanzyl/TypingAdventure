@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
 
-namespace Cerebras
+namespace Cerebras.SDK
 {
     public class CerebrasClient
     {

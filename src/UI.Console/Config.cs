@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 
-namespace TypingAdventure;
+namespace UI.Console;
 
 internal static class Config
 {
