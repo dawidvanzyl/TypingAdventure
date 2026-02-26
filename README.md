@@ -20,6 +20,8 @@ The AI narrates the world and enforces rules.
 * Narrator system prompt – defines game rules
 * Periodic fact summarisation to reduce token usage
 
+See also: `docs/Coding_Standards.md` for coding style, testing expectations, and Git workflow conventions.
+
 ## Run
 
 1. Add your AI client API key
