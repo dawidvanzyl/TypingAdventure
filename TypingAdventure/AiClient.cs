@@ -1,9 +1,9 @@
-﻿using Cerebras;
+using Cerebras;
 using Microsoft.Extensions.Configuration;
 
 namespace TypingAdventure;
 
-public class AiClient
+public class AiClient : IAiClient
 {
     private readonly CerebrasClient _client;
     private readonly IConfiguration _configuration;
