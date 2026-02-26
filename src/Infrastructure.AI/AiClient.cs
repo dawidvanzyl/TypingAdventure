@@ -1,7 +1,8 @@
-using Cerebras;
 using Microsoft.Extensions.Configuration;
+using Cerebras.SDK;
+using Application.Interfaces;
 
-namespace TypingAdventure;
+namespace Infrastructure.AI;
 
 public class AiClient : IAiClient
 {

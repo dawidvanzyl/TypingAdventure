@@ -1,4 +1,7 @@
-namespace TypingAdventure;
+using Domain.Game;
+using Application.Interfaces;
+
+namespace Application;
 
 public class GameEngine
 {
@@ -51,4 +54,3 @@ public class GameEngine
         return summary;
     }
 }
-

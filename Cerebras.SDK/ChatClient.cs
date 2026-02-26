@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Cerebras;
+namespace Cerebras.SDK;
 
 public class ChatClient
 {

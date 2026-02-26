@@ -1,4 +1,6 @@
-﻿namespace TypingAdventure;
+using Domain.Game;
+
+namespace Application;
 
 public static class PromptBuilder
 {
@@ -52,4 +54,3 @@ Preserve important events and facts.
 {fullStory}
 """;
 }
-
