@@ -14,28 +14,86 @@ These standards apply to all C# / .NET code in this repository (including tests)
 
 ## C# Style & Naming
 
-- **Baseline**: Follow the official Microsoft C# coding conventions.
-- **Naming**:
-  - **Classes, structs, interfaces, enums, delegates**: `PascalCase` (e.g., `GameEngine`, `IAiClient`).
-  - **Methods and properties**: `PascalCase` (e.g., `GeneratePremiseAsync`, `StorySummary`).
-  - **Fields (private)**: `_camelCase` with leading underscore (e.g., `_aiClient`).
-  - **Local variables and parameters**: `camelCase`.
-  - **Interfaces**: Start with `I` (e.g., `IAiClient`).
-- **Braces**:
-  - **All `if` statements must have braces**, even for single-line bodies.
-  - Apply the same style consistently to `else`, `for`, `foreach`, `while`, etc.
-- **Switch usage**:
-  - **Prefer `switch`/`switch expressions` where possible** instead of long `if/else if` chains over the same value.
-  - Use pattern matching in `switch` where it improves clarity.
-- **Async**:
-  - Methods doing async work should end with `Async` (e.g., `GeneratePremiseAsync`).
-  - Avoid `async void` except for event handlers.
-- **One class/record/struct per file**:
-  - Each file must contain exactly one top-level class, record, or struct.
-  - This keeps code organized, improves discoverability, and simplifies maintenance.
-- **Formatting**:
-  - Use the project’s default formatter settings where available.
-  - Keep methods short and focused; extract helper methods when they grow too large.
+### Automated Formatting via .editorconfig
+
+This project uses **`.editorconfig`** to enforce consistent code formatting and style rules. Developers should rely on their IDE's EditorConfig support (built-in to Visual Studio, Rider, VS Code, etc.) to automatically apply these rules.
+
+**Key rules enforced by .editorconfig include:**
+- **Naming conventions**: Classes, methods, properties use `PascalCase`; private/internal fields use `_camelCase` prefix; interfaces start with `I`.
+- **Brace placement**: All control flow statements (`if`, `else`, `for`, `foreach`, `while`, etc.) must have braces.
+- **Switch expressions**: Modern `switch` expressions are preferred over traditional `if/else if` chains.
+- **Access modifiers**: All non-interface members must have explicit access modifiers (e.g., `public`, `private`, `internal`).
+- **Using directives**: Must appear outside the namespace declaration.
+- **Namespaces**: Must use file-scoped syntax (e.g., `namespace Foo;` instead of `namespace Foo { ... }`).
+- **Line endings**: CRLF format for all C# files.
+- **Indentation**: 4 spaces, keep tabs.
+
+**For the complete list of formatting rules, see the [`.editorconfig`](../.editorconfig) file in the repository root.** Most rules are enforced at the `error` or `warning` level and will be caught during build or by your IDE.
+
+### Naming Conventions (Automated by .editorconfig)
+
+Naming conventions are enforced by `.editorconfig` rules. However, understand the rationale:
+- **Classes, structs, interfaces, enums, delegates**: `PascalCase` (e.g., `GameEngine`, `IAiClient`).
+- **Methods and properties**: `PascalCase` (e.g., `GeneratePremiseAsync`, `StorySummary`).
+- **Fields (private/internal)**: `_camelCase` with leading underscore (e.g., `_aiClient`).
+- **Local variables and parameters**: `camelCase`.
+- **Interfaces**: Start with `I` (e.g., `IAiClient`).
+
+### Async Methods
+
+- **Naming convention**: Methods performing async work should end with `Async` (e.g., `GeneratePremiseAsync`). This is a **naming convention** that helps callers identify that a method returns a `Task` or `Task<T>`.
+- **Patterns**: Use `async/await` syntax and actual async/await patterns are enforced by `.editorconfig` rules (e.g., preference for async methods, handling of `Task` return types).
+- **Avoid `async void`**: Do not use `async void` except for event handlers. Prefer `async Task` for fire-and-forget patterns or return an awaitable `Task`.
+
+### One Class/Record/Struct per File
+
+- Each file must contain exactly one top-level class, record, or struct.
+- This keeps code organized, improves discoverability, and simplifies maintenance.
+
+### readonly Fields
+
+- Fields that are not reassigned after initialization should be marked `readonly`. This is enforced by `.editorconfig` rules as a warning-level preference.
+
+### Formatting Standards Enforced by .editorconfig
+
+The following rules are automatically enforced by `.editorconfig` and should not require manual attention if your IDE is properly configured:
+
+#### Access Modifiers
+- All non-interface members must have explicit access modifiers.
+- Examples:
+  - `public class GameEngine { }`
+  - `private readonly HttpClient _client;`
+  - `internal static void Configure() { }`
+- Do not rely on implicit access levels; always be explicit about visibility.
+
+#### Using Directives
+- Using directives must be placed **outside** the namespace declaration (enforced as an error).
+- Example:
+  ```csharp
+  using System;
+  using MyProject.Domain;
+  
+  namespace MyProject.Application;
+  
+  public class GameService { ... }
+  ```
+
+#### File-Scoped Namespaces
+- Prefer **file-scoped namespace syntax** over block-scoped namespaces (enforced as an error).
+- Modern syntax (preferred):
+  ```csharp
+  namespace MyProject.Application;
+  
+  public class GameService { ... }
+  ```
+- Legacy syntax (not allowed):
+  ```csharp
+  namespace MyProject.Application
+  {
+      public class GameService { ... }
+  }
+  ```
+- Each file contains one namespace declaration at the top, simplifying indentation and improving readability.
 
 ---
 
