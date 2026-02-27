@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using FluentAssertions;
 using Xunit;
 
 namespace Infrastructure.AI.Tests;
@@ -11,6 +12,6 @@ public class AiClientTests
         var type = typeof(IAiClient);
         var implType = typeof(AiClient);
 
-        Assert.True(type.IsAssignableFrom(implType));
+        implType.Should().Implement(type);
     }
 }

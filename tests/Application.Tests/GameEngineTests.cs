@@ -1,6 +1,7 @@
 using Application;
 using Application.Interfaces;
 using Domain.Game;
+using FluentAssertions;
 using Xunit;
 
 namespace Application.Tests;
@@ -8,7 +9,7 @@ namespace Application.Tests;
 public class GameEngineTests
 {
     [Fact]
-    public async Task GeneratePremiseAsync_UpdatesStateAndUsesTheme()
+    public async Task GeneratePremiseAsync_WithValidTheme_UpdatesStateAndReturnsPremise()
     {
         var fake = new FakeAiClient();
         fake.NextResponse = "Generated premise";
@@ -17,16 +18,16 @@ public class GameEngineTests
 
         var premise = await engine.GeneratePremiseAsync(state, "mystery");
 
-        Assert.Equal("Generated premise", premise);
-        Assert.Equal("Generated premise", state.Premise);
-        Assert.Contains("Generated premise", state.StoryLog);
-        Assert.NotEmpty(state.StorySummary);
-        Assert.Equal(2, fake.Calls.Count);
-        Assert.Contains("Generate a unique mystery premise", fake.Calls[0].UserPrompt);
+        premise.Should().Be("Generated premise");
+        state.Premise.Should().Be("Generated premise");
+        state.StoryLog.Should().Contain("Generated premise");
+        state.StorySummary.Should().NotBeEmpty();
+        fake.Calls.Should().HaveCount(2);
+        fake.Calls[0].UserPrompt.Should().Contain("Generate a unique mystery premise");
     }
 
     [Fact]
-    public async Task ApplyTurnAsync_AppendsResponseAndRefreshesSummary()
+    public async Task ApplyTurnAsync_WithPlayerAction_AppendsResponseAndRefreshesSummary()
     {
         var fake = new FakeAiClient();
         var engine = new GameEngine(fake);
@@ -41,16 +42,16 @@ public class GameEngineTests
 
         var response = await engine.ApplyTurnAsync(state, "look around");
 
-        Assert.Equal("Turn response", response);
-        Assert.Contains("Turn response", state.StoryLog);
-        Assert.Equal("Updated summary", state.StorySummary);
-        Assert.Equal(2, fake.Calls.Count);
-        Assert.Contains("Last player action:", fake.Calls[0].UserPrompt);
-        Assert.Contains("look around", fake.Calls[0].UserPrompt);
+        response.Should().Be("Turn response");
+        state.StoryLog.Should().Contain("Turn response");
+        state.StorySummary.Should().Be("Updated summary");
+        fake.Calls.Should().HaveCount(2);
+        fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
+        fake.Calls[0].UserPrompt.Should().Contain("look around");
     }
 
     [Fact]
-    public async Task SummariseAsync_UsesFullStoryInPrompt()
+    public async Task SummariseAsync_WithFullStory_UsesFullStoryInPrompt()
     {
         var fake = new FakeAiClient();
         fake.NextResponse = "Summary";
@@ -61,12 +62,12 @@ public class GameEngineTests
 
         var summary = await engine.SummariseAsync(state);
 
-        Assert.Equal("Summary", summary);
-        Assert.Equal("Summary", state.StorySummary);
-        Assert.Single(fake.Calls);
+        summary.Should().Be("Summary");
+        state.StorySummary.Should().Be("Summary");
+        fake.Calls.Should().ContainSingle();
         var call = fake.Calls[0];
-        Assert.Contains("Line 1", call.UserPrompt);
-        Assert.Contains("Line 2", call.UserPrompt);
+        call.UserPrompt.Should().Contain("Line 1");
+        call.UserPrompt.Should().Contain("Line 2");
     }
 }
 

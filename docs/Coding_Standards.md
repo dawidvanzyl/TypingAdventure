@@ -132,6 +132,32 @@ These standards apply to all C# / .NET code in this repository (including tests)
 - Use `IClassFixture<T>` for tests that require shared state between tests.
 - Use plain `[Fact]` for single, atomic test cases.
 
+### Test Method Naming
+
+- Follow the pattern: `{MethodUnderTest}_{Scenario}_{ExpectedResult}`.
+- Examples:
+  - `GeneratePremise_WithValidInput_ReturnsValidStory`
+  - `GeneratePremise_WithNullInput_ThrowsArgumentNullException`
+  - `ApplyTurn_WithPlayerAction_AppendsResponseToStoryLog`
+
+### Test Isolation
+
+- Tests must pass when run individually or in any order.
+- Do not rely on execution order or shared mutable state (except via `IClassFixture<T>`).
+
+### Assertion Library
+
+- Use **FluentAssertions** for all assertions.
+- Prefer fluent syntax: `result.Should().Be(expected)` over `Assert.Equal(expected, result)`.
+- Example:
+  ```csharp
+  // Instead of:
+  Assert.Equal("Expected", result);
+  
+  // Use:
+  result.Should().Be("Expected");
+  ```
+
 ### Framework
 
 - Use **xUnit**.
