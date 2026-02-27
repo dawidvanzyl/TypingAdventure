@@ -30,6 +30,9 @@ These standards apply to all C# / .NET code in this repository (including tests)
 - **Async**:
   - Methods doing async work should end with `Async` (e.g., `GeneratePremiseAsync`).
   - Avoid `async void` except for event handlers.
+- **One class/record/struct per file**:
+  - Each file must contain exactly one top-level class, record, or struct.
+  - This keeps code organized, improves discoverability, and simplifies maintenance.
 - **Formatting**:
   - Use the project’s default formatter settings where available.
   - Keep methods short and focused; extract helper methods when they grow too large.
@@ -131,6 +134,32 @@ These standards apply to all C# / .NET code in this repository (including tests)
 - Use `[Theory]` + `[InlineData]` for testing multiple inputs to the same test.
 - Use `IClassFixture<T>` for tests that require shared state between tests.
 - Use plain `[Fact]` for single, atomic test cases.
+
+### Test Method Naming
+
+- Follow the pattern: `{MethodUnderTest}_{Scenario}_{ExpectedResult}`.
+- Examples:
+  - `GeneratePremise_WithValidInput_ReturnsValidStory`
+  - `GeneratePremise_WithNullInput_ThrowsArgumentNullException`
+  - `ApplyTurn_WithPlayerAction_AppendsResponseToStoryLog`
+
+### Test Isolation
+
+- Tests must pass when run individually or in any order.
+- Do not rely on execution order or shared mutable state (except via `IClassFixture<T>`).
+
+### Assertion Library
+
+- Use **FluentAssertions** for all assertions.
+- Prefer fluent syntax: `result.Should().Be(expected)` over `Assert.Equal(expected, result)`.
+- Example:
+  ```csharp
+  // Instead of:
+  Assert.Equal("Expected", result);
+  
+  // Use:
+  result.Should().Be("Expected");
+  ```
 
 ### Framework
 

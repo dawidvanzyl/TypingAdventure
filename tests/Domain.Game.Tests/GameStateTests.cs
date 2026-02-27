@@ -1,4 +1,5 @@
 using Domain.Game;
+using FluentAssertions;
 using Xunit;
 
 namespace Domain.Game.Tests;
@@ -10,11 +11,11 @@ public class GameStateTests
     {
         var state = new GameState();
 
-        Assert.Equal(string.Empty, state.Premise);
-        Assert.Equal(string.Empty, state.StorySummary);
-        Assert.False(state.GameOver);
-        Assert.Empty(state.StoryLog);
-        Assert.Empty(state.KeyFacts);
-        Assert.Empty(state.Inventory);
+        state.Premise.Should().BeEmpty();
+        state.StorySummary.Should().BeEmpty();
+        state.GameOver.Should().BeFalse();
+        state.StoryLog.Should().BeEmpty();
+        state.KeyFacts.Should().BeEmpty();
+        state.Inventory.Should().BeEmpty();
     }
 }
