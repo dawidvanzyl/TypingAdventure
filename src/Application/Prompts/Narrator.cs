@@ -26,8 +26,8 @@ public static class Narrator
             Story summary:
             {state.StorySummary}
 
-            Known facts:
-            {string.Join(", ", state.KeyFacts)}
+            Game state (JSON):
+            {state.KeyFactsJson}
 
             Inventory:
             {string.Join(", ", state.Inventory)}

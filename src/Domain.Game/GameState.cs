@@ -6,6 +6,7 @@ public class GameState
     public string StorySummary { get; set; } = "";
     public List<string> StoryLog { get; } = new();
     public List<string> KeyFacts { get; } = new();
+    public string KeyFactsJson { get; set; } = "{}";
     public List<string> Inventory { get; } = new();
 
     public bool GameOver { get; set; } = false;
