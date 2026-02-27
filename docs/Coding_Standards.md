@@ -26,7 +26,7 @@ This project uses **`.editorconfig`** to enforce consistent code formatting and 
 - **Using directives**: Must appear outside the namespace declaration.
 - **Namespaces**: Must use file-scoped syntax (e.g., `namespace Foo;` instead of `namespace Foo { ... }`).
 - **Line endings**: CRLF format for all C# files.
-- **Indentation**: 4 spaces, no tabs.
+- **Indentation**: 4 spaces, keep tabs.
 
 **For the complete list of formatting rules, see the [`.editorconfig`](../.editorconfig) file in the repository root.** Most rules are enforced at the `error` or `warning` level and will be caught during build or by your IDE.
 
