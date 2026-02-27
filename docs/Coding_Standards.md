@@ -30,6 +30,9 @@ These standards apply to all C# / .NET code in this repository (including tests)
 - **Async**:
   - Methods doing async work should end with `Async` (e.g., `GeneratePremiseAsync`).
   - Avoid `async void` except for event handlers.
+- **One class/record/struct per file**:
+  - Each file must contain exactly one top-level class, record, or struct.
+  - This keeps code organized, improves discoverability, and simplifies maintenance.
 - **Formatting**:
   - Use the project’s default formatter settings where available.
   - Keep methods short and focused; extract helper methods when they grow too large.

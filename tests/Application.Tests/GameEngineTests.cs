@@ -1,5 +1,6 @@
 using Application;
 using Application.Interfaces;
+using Application.Tests.Fakes;
 using Domain.Game;
 using FluentAssertions;
 using Xunit;
@@ -68,28 +69,5 @@ public class GameEngineTests
         var call = fake.Calls[0];
         call.UserPrompt.Should().Contain("Line 1");
         call.UserPrompt.Should().Contain("Line 2");
-    }
-}
-
-public class FakeAiClient : IAiClient
-{
-    public record Call(string SystemPrompt, string UserPrompt);
-
-    public List<Call> Calls { get; } = new();
-
-    public Queue<string> NextResponses { get; } = new();
-
-    public string NextResponse { get; set; } = "Response";
-
-    public Task<string> GetCompletionAsync(string systemPrompt, string userPrompt)
-    {
-        Calls.Add(new Call(systemPrompt, userPrompt));
-
-        if (NextResponses.Count > 0)
-        {
-            return Task.FromResult(NextResponses.Dequeue());
-        }
-
-        return Task.FromResult(NextResponse);
     }
 }
