@@ -71,6 +71,19 @@ This is the intended high-level flow of the game, regardless of internal impleme
   - A game state object that tracks game progress, important facts, and overall status.
 - The summary is refreshed regularly (typically every turn) to balance narrative continuity with token efficiency.
 
+### Key Facts System
+- **Purpose**: Extract and track durable, game-relevant facts from the evolving story to maintain world state consistency.
+- **Implementation**: After each turn, the `GameEngine.ApplyTurnAsync` method calls a private `AddKeyFactsAsync` method that:
+  - Calls `GetKeyFactsAsync` to extract facts from the AI
+  - Deduplicates facts and adds only new ones to `GameState.KeyFacts`
+  - Uses the `Application.Prompts.KeyFacts` class for the system prompt and prompt builder
+- **Prompt System**: The extraction logic uses:
+  - `Application.Prompts.KeyFacts.SystemPrompt`: Instructs the model to extract factual information (not narrative), format as `<Category>: <Value>`, avoid speculation, and not repeat existing facts
+  - `Application.Prompts.KeyFacts.BuildKeyFactsPrompt(story)`: Builds the user prompt containing the story text
+- **Storage**: Extracted facts are stored in `GameState.KeyFacts` as a `List<string>`.
+- **Usage**: Facts are included in the turn prompt (via `Application.Prompts.Narrator.BuildTurnPrompt`) so the AI respects established state when generating responses.
+- **Error Handling**: If key fact extraction fails, a `KeyFactExtractionException` is thrown; this is caught at the call site and can be logged or handled as needed.
+
 ---
 
 ## Project Structure

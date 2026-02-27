@@ -27,29 +27,33 @@ public class GameEngineTests
 		fake.Calls[0].UserPrompt.Should().Contain("Generate a unique mystery premise");
 	}
 
-	[Fact]
-	public async Task ApplyTurnAsync_WithPlayerAction_AppendsResponseAndRefreshesSummary()
-	{
-		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake);
-		var state = new GameState
-		{
-			Premise = "Premise",
-			StorySummary = "Summary"
-		};
-		state.StoryLog.Add("Premise");
-		fake.NextResponses.Enqueue("Turn response");
-		fake.NextResponses.Enqueue("Updated summary");
+    [Fact]
+    public async Task ApplyTurnAsync_WithPlayerAction_AppendsResponseAndRefreshesSummary()
+    {
+        var fake = new FakeAiClient();
+        var engine = new GameEngine(fake);
+        var state = new GameState
+        {
+            Premise = "Premise",
+            StorySummary = "Summary"
+        };
+        state.StoryLog.Add("Premise");
+        fake.NextResponses.Enqueue("Turn response");
+        fake.NextResponses.Enqueue("Updated summary");
+        fake.NextResponses.Enqueue("Location: House\nHealth: Fine");
 
 		var response = await engine.ApplyTurnAsync(state, "look around");
 
-		response.Should().Be("Turn response");
-		state.StoryLog.Should().Contain("Turn response");
-		state.StorySummary.Should().Be("Updated summary");
-		fake.Calls.Should().HaveCount(2);
-		fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
-		fake.Calls[0].UserPrompt.Should().Contain("look around");
-	}
+        response.Should().Be("Turn response");
+        state.StoryLog.Should().Contain("Turn response");
+        state.StorySummary.Should().Be("Updated summary");
+        state.KeyFacts.Should().HaveCount(2);
+        state.KeyFacts.Should().Contain("Location: House");
+        state.KeyFacts.Should().Contain("Health: Fine");
+        fake.Calls.Should().HaveCount(3);
+        fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
+        fake.Calls[0].UserPrompt.Should().Contain("look around");
+    }
 
 	[Fact]
 	public async Task SummariseAsync_WithFullStory_UsesFullStoryInPrompt()
