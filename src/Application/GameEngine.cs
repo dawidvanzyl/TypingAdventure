@@ -9,7 +9,7 @@ public class GameEngine
 {
 	private readonly IAiClient _aiClient;
 
-	public event AiCallPendingHandler? OnAiCallPending;
+	public event AiCallPendingHandler OnAiCallPending;
 
 	public GameEngine(IAiClient aiClient)
 	{
@@ -47,7 +47,7 @@ public class GameEngine
 
 		state.StorySummary = await SummariseAsync(state);
 
-        await AddKeyFactsJsonAsync(state);
+        await AddKeyFactsAsync(state);
 
         return response;
     }
@@ -65,7 +65,7 @@ public class GameEngine
         return summary;
     }
 
-    private async Task<string> GetKeyFactsJsonAsync(GameState state)
+    private async Task<IReadOnlyCollection<string>> GetKeyFactsAsync(GameState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -73,7 +73,7 @@ public class GameEngine
 
         if (string.IsNullOrWhiteSpace(fullStory))
         {
-            return "{}";
+            return Array.Empty<string>();
         }
 
         string aiResponse;
@@ -90,18 +90,29 @@ public class GameEngine
 
         if (string.IsNullOrWhiteSpace(aiResponse))
         {
-            return "{}";
+            return Array.Empty<string>();
         }
 
-        return aiResponse;
+        var extractedFacts = aiResponse
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(f => f.Trim())
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .ToList();
+
+        var newFacts = extractedFacts
+            .Except(state.KeyFacts, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return newFacts.AsReadOnly();
     }
 
-    private async Task AddKeyFactsJsonAsync(GameState state)
+    private async Task AddKeyFactsAsync(GameState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        var keyFactsJson = await GetKeyFactsJsonAsync(state);
-        state.KeyFactsJson = keyFactsJson;
+        var newFacts = await GetKeyFactsAsync(state);
+        var distinctFacts = newFacts.Except(state.KeyFacts, StringComparer.OrdinalIgnoreCase);
+        state.KeyFacts.AddRange(distinctFacts);
     }
 }
 

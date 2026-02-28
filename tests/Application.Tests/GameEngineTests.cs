@@ -12,8 +12,10 @@ public class GameEngineTests
 	[Fact]
 	public async Task GeneratePremiseAsync_WithValidTheme_UpdatesStateAndReturnsPremise()
 	{
-		var fake = new FakeAiClient();
-		fake.NextResponse = "Generated premise";
+		var fake = new FakeAiClient
+		{
+			NextResponse = "Generated premise"
+		};
 		var engine = new GameEngine(fake);
 		var state = new GameState();
 
@@ -40,44 +42,16 @@ public class GameEngineTests
         state.StoryLog.Add("Premise");
         fake.NextResponses.Enqueue("Turn response");
         fake.NextResponses.Enqueue("Updated summary");
-        fake.NextResponses.Enqueue("""
-            {
-              "setting": {
-                "currentLocation": "House",
-                "locationDescription": null,
-                "discoveredLocations": [],
-                "exits": []
-              },
-              "characters": {
-                "npcs": [],
-                "allies": [],
-                "enemies": []
-              },
-              "objects": {
-                "inventory": [],
-                "discovered": []
-              },
-              "narrative": {
-                "atmosphere": null,
-                "timeProgress": null,
-                "objectives": [],
-                "warnings": [],
-                "plotPoints": []
-              },
-              "flags": {
-                "eventsTriggered": [],
-                "knowledgeGained": []
-              }
-            }
-            """);
+        fake.NextResponses.Enqueue("Location: House\nHealth: Fine");
 
 		var response = await engine.ApplyTurnAsync(state, "look around");
 
         response.Should().Be("Turn response");
         state.StoryLog.Should().Contain("Turn response");
         state.StorySummary.Should().Be("Updated summary");
-        state.KeyFactsJson.Should().NotBeEmpty();
-        state.KeyFactsJson.Should().Contain("House");
+        state.KeyFacts.Should().HaveCount(2);
+        state.KeyFacts.Should().Contain("Location: House");
+        state.KeyFacts.Should().Contain("Health: Fine");
         fake.Calls.Should().HaveCount(3);
         fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
         fake.Calls[0].UserPrompt.Should().Contain("look around");
@@ -86,8 +60,10 @@ public class GameEngineTests
 	[Fact]
 	public async Task SummariseAsync_WithFullStory_UsesFullStoryInPrompt()
 	{
-		var fake = new FakeAiClient();
-		fake.NextResponse = "Summary";
+		var fake = new FakeAiClient
+		{
+			NextResponse = "Summary"
+		};
 		var engine = new GameEngine(fake);
 		var state = new GameState();
 		state.StoryLog.Add("Line 1");
@@ -104,22 +80,7 @@ public class GameEngineTests
 	}
 
 	[Fact]
-	public void GameEngine_HasOnAiCallPendingEvent()
-	{
-		// Arrange
-		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake);
-
-		// Act
-		var eventInfo = typeof(GameEngine).GetEvent("OnAiCallPending");
-
-		// Assert
-		eventInfo.Should().NotBeNull();
-		eventInfo.EventHandlerType.Should().Be(typeof(AiCallPendingHandler));
-	}
-
-	[Fact]
-	public void GameEngine_OnAiCallPending_CanBeSubscribedTo()
+	public void GameEngine_FiresOnAiCallPendingEvent()
 	{
 		// Arrange
 		var fake = new FakeAiClient();
@@ -133,9 +94,10 @@ public class GameEngineTests
 		};
 
 		// Act - verify subscription succeeded (no exception thrown)
+		fake.FireAiCallPending();
 
 		// Assert
-		eventFired.Should().BeFalse(); // Event shouldn't fire until actual retry occurs
+		eventFired.Should().BeTrue(); 
 	}
 }
 

@@ -11,7 +11,7 @@ public class AiClient : IAiClient
 	private readonly IConfiguration _configuration;
 	private readonly IAsyncPolicy<string> _retryPolicy;
 
-	public event AiCallPendingHandler? OnAiCallPending;
+	public event AiCallPendingHandler OnAiCallPending;
 
 	public AiClient(IConfiguration configuration)
 	{
