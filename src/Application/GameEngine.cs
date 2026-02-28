@@ -5,52 +5,60 @@ namespace Application;
 
 public class GameEngine
 {
-    private readonly IAiClient _aiClient;
+	private readonly IAiClient _aiClient;
 
-    public GameEngine(IAiClient aiClient)
-    {
-        _aiClient = aiClient;
-    }
+	public event AiCallPendingHandler? OnAiCallPending;
 
-    public async Task<string> GeneratePremiseAsync(GameState state, string theme)
-    {
-        var premise = await _aiClient.GetCompletionAsync(
-            "You are a creative story narrator.",
-            PromptBuilder.BuildPremisePrompt(theme ?? string.Empty));
+	public GameEngine(IAiClient aiClient)
+	{
+		_aiClient = aiClient;
+		_aiClient.OnAiCallPending += (attemptNumber, waitTime) =>
+		{
+			OnAiCallPending?.Invoke(attemptNumber, waitTime);
+			return Task.CompletedTask;
+		};
+	}
 
-        state.Premise = premise;
-        state.StoryLog.Add(premise);
+	public async Task<string> GeneratePremiseAsync(GameState state, string theme)
+	{
+		var premise = await _aiClient.GetCompletionAsync(
+			"You are a creative story narrator.",
+			PromptBuilder.BuildPremisePrompt(theme ?? string.Empty));
 
-        state.StorySummary = await SummariseAsync(state);
+		state.Premise = premise;
+		state.StoryLog.Add(premise);
 
-        return premise;
-    }
+		state.StorySummary = await SummariseAsync(state);
 
-    public async Task<string> ApplyTurnAsync(GameState state, string playerInput)
-    {
-        var turnPrompt = PromptBuilder.BuildTurnPrompt(state, playerInput);
+		return premise;
+	}
 
-        var response = await _aiClient.GetCompletionAsync(
-            PromptBuilder.NarratorSystemPrompt,
-            turnPrompt);
+	public async Task<string> ApplyTurnAsync(GameState state, string playerInput)
+	{
+		var turnPrompt = PromptBuilder.BuildTurnPrompt(state, playerInput);
 
-        state.StoryLog.Add(response);
+		var response = await _aiClient.GetCompletionAsync(
+			PromptBuilder.NarratorSystemPrompt,
+			turnPrompt);
 
-        state.StorySummary = await SummariseAsync(state);
+		state.StoryLog.Add(response);
 
-        return response;
-    }
+		state.StorySummary = await SummariseAsync(state);
 
-    public async Task<string> SummariseAsync(GameState state)
-    {
-        var fullStory = string.Join("\n\n", state.StoryLog);
+		return response;
+	}
 
-        var summary = await _aiClient.GetCompletionAsync(
-            "You summarise stories accurately.",
-            PromptBuilder.BuildSummaryPrompt(fullStory));
+	public async Task<string> SummariseAsync(GameState state)
+	{
+		var fullStory = string.Join("\n\n", state.StoryLog);
 
-        state.StorySummary = summary;
+		var summary = await _aiClient.GetCompletionAsync(
+			"You summarise stories accurately.",
+			PromptBuilder.BuildSummaryPrompt(fullStory));
 
-        return summary;
-    }
+		state.StorySummary = summary;
+
+		return summary;
+	}
 }
+

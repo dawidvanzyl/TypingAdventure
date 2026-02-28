@@ -7,37 +7,45 @@ namespace UI.Console;
 
 class Program
 {
-    static async Task Main()
-    {
-        var services = new ServiceCollection();
-        services.AddTypingAdventureServices(Config.Configuration);
-        var serviceProvider = services.BuildServiceProvider();
+	static async Task Main()
+	{
+		var services = new ServiceCollection();
+		services.AddTypingAdventureServices(Config.Configuration);
+		var serviceProvider = services.BuildServiceProvider();
 
-        var engine = serviceProvider.GetRequiredService<GameEngine>();
-        var state = new GameState();
+		var engine = serviceProvider.GetRequiredService<GameEngine>();
+		var state = new GameState();
 
-        System.Console.WriteLine("Typing Adventure\n");
+		// Subscribe to AI call pending event to show user feedback
+		engine.OnAiCallPending += (attemptNumber, waitTime) =>
+		{
+			System.Console.WriteLine($"⏳ AI is thinking... waiting {waitTime.TotalSeconds} seconds");
+			return Task.CompletedTask;
+		};
 
-        System.Console.WriteLine("Enter a theme to begin your story.\n");
-        var theme = System.Console.ReadLine();
+		System.Console.WriteLine("Typing Adventure\n");
 
-        var premise = await engine.GeneratePremiseAsync(state, theme);
+		System.Console.WriteLine("Enter a theme to begin your story.\n");
+		var theme = System.Console.ReadLine();
 
-        System.Console.WriteLine(premise);
+		var premise = await engine.GeneratePremiseAsync(state, theme);
 
-        while (!state.GameOver)
-        {
-            System.Console.Write("\n> ");
-            var playerInput = System.Console.ReadLine();
+		System.Console.WriteLine(premise);
 
-            if (string.IsNullOrWhiteSpace(playerInput))
-            {
-                continue;
-            }
+		while (!state.GameOver)
+		{
+			System.Console.Write("\n> ");
+			var playerInput = System.Console.ReadLine();
 
-            var response = await engine.ApplyTurnAsync(state, playerInput);
+			if (string.IsNullOrWhiteSpace(playerInput))
+			{
+				continue;
+			}
 
-            System.Console.WriteLine("\n" + response);
-        }
-    }
+			var response = await engine.ApplyTurnAsync(state, playerInput);
+
+			System.Console.WriteLine("\n" + response);
+		}
+	}
 }
+
