@@ -38,6 +38,8 @@ Naming conventions are enforced by `.editorconfig` rules. However, understand th
 - **Fields (private/internal)**: `_camelCase` with leading underscore (e.g., `_aiClient`).
 - **Local variables and parameters**: `camelCase`.
 - **Interfaces**: Start with `I` (e.g., `IAiClient`).
+- **Delegates for event handlers**: `{EventName}Handler` (e.g., `AiCallPendingHandler`).
+
 
 ### Async Methods
 
