@@ -1,4 +1,5 @@
 using Application.Exceptions;
+using Application.GenreDetection;
 using Application.Interfaces;
 using Application.Prompts;
 using Application.Schemas;
@@ -8,33 +9,37 @@ namespace Application;
 
 public class GameEngine
 {
-	private readonly IAiClient _aiClient;
+    private readonly IAiClient _aiClient;
+    private readonly GenreDetector _genreDetector;
 
-	public event AiCallPendingHandler OnAiCallPending;
+    public event AiCallPendingHandler OnAiCallPending;
 
-	public GameEngine(IAiClient aiClient)
-	{
-		_aiClient = aiClient;
-		_aiClient.OnAiCallPending += (attemptNumber, waitTime) =>
-		{
-			OnAiCallPending?.Invoke(attemptNumber, waitTime);
-			return Task.CompletedTask;
-		};
-	}
+    public GameEngine(IAiClient aiClient, GenreDetector genreDetector)
+    {
+        _aiClient = aiClient;
+        _genreDetector = genreDetector;
+        _aiClient.OnAiCallPending += (attemptNumber, waitTime) =>
+        {
+            OnAiCallPending?.Invoke(attemptNumber, waitTime);
+            return Task.CompletedTask;
+        };
+    }
 
     public async Task<string> GeneratePremiseAsync(GameState state, string theme)
     {
+        state.DetectedGenre = await _genreDetector.DetectAsync(theme);
+
         var premise = await _aiClient.GetCompletionAsync(
             "You are a creative story narrator.",
             Narrator.BuildPremisePrompt(theme ?? string.Empty));
 
-		state.Premise = premise;
-		state.StoryLog.Add(premise);
+        state.Premise = premise;
+        state.StoryLog.Add(premise);
 
-		state.StorySummary = await SummariseAsync(state);
+        state.StorySummary = await SummariseAsync(state);
 
-		return premise;
-	}
+        return premise;
+    }
 
     public async Task<string> ApplyTurnAsync(GameState state, string playerInput)
     {
@@ -81,7 +86,7 @@ public class GameEngine
         try
         {
             aiResponse = await _aiClient.GetCompletionAsync(
-                KeyFacts.BuildSystemPrompt(Agnostic.Schema),
+                KeyFacts.BuildSystemPrompt(GenreSchema.For(state.DetectedGenre)),
                 KeyFacts.BuildKeyFactsPrompt(fullStory));
         }
         catch (Exception ex)

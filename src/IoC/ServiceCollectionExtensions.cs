@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Application;
+using Application.GenreDetection;
 using Application.Interfaces;
 using Infrastructure.AI;
 
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration)
     {
         services.AddSingleton<IAiClient>(sp => new AiClient(configuration));
+        services.AddTransient<GenreDetector>();
         services.AddTransient<GameEngine>();
 
         return services;
