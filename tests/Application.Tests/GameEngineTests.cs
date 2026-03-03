@@ -42,16 +42,44 @@ public class GameEngineTests
         state.StoryLog.Add("Premise");
         fake.NextResponses.Enqueue("Turn response");
         fake.NextResponses.Enqueue("Updated summary");
-        fake.NextResponses.Enqueue("Location: House\nHealth: Fine");
+        fake.NextResponses.Enqueue("""
+            {
+              "setting": {
+                "currentLocation": "House",
+                "locationDescription": null,
+                "discoveredLocations": [],
+                "exits": []
+              },
+              "characters": {
+                "npcs": [],
+                "allies": [],
+                "enemies": []
+              },
+              "objects": {
+                "inventory": [],
+                "discovered": []
+              },
+              "narrative": {
+                "atmosphere": null,
+                "timeProgress": null,
+                "objectives": [],
+                "warnings": [],
+                "plotPoints": []
+              },
+              "flags": {
+                "eventsTriggered": [],
+                "knowledgeGained": []
+              }
+            }
+            """);
 
-		var response = await engine.ApplyTurnAsync(state, "look around");
+        var response = await engine.ApplyTurnAsync(state, "look around");
 
         response.Should().Be("Turn response");
         state.StoryLog.Should().Contain("Turn response");
         state.StorySummary.Should().Be("Updated summary");
-        state.KeyFacts.Should().HaveCount(2);
-        state.KeyFacts.Should().Contain("Location: House");
-        state.KeyFacts.Should().Contain("Health: Fine");
+        state.KeyFactsJson.Should().NotBeEmpty();
+        state.KeyFactsJson.Should().Contain("House");
         fake.Calls.Should().HaveCount(3);
         fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
         fake.Calls[0].UserPrompt.Should().Contain("look around");

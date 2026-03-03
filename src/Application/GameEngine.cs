@@ -1,6 +1,7 @@
 using Application.Exceptions;
 using Application.Interfaces;
 using Application.Prompts;
+using Application.Schemas;
 using Domain.Game;
 
 namespace Application;
@@ -47,7 +48,7 @@ public class GameEngine
 
 		state.StorySummary = await SummariseAsync(state);
 
-        await AddKeyFactsAsync(state);
+        await AddKeyFactsJsonAsync(state);
 
         return response;
     }
@@ -65,7 +66,7 @@ public class GameEngine
         return summary;
     }
 
-    private async Task<IReadOnlyCollection<string>> GetKeyFactsAsync(GameState state)
+    private async Task<string> GetKeyFactsJsonAsync(GameState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
@@ -73,14 +74,14 @@ public class GameEngine
 
         if (string.IsNullOrWhiteSpace(fullStory))
         {
-            return Array.Empty<string>();
+            return "{}";
         }
 
         string aiResponse;
         try
         {
             aiResponse = await _aiClient.GetCompletionAsync(
-                KeyFacts.SystemPrompt,
+                KeyFacts.BuildSystemPrompt(Agnostic.Schema),
                 KeyFacts.BuildKeyFactsPrompt(fullStory));
         }
         catch (Exception ex)
@@ -90,29 +91,18 @@ public class GameEngine
 
         if (string.IsNullOrWhiteSpace(aiResponse))
         {
-            return Array.Empty<string>();
+            return "{}";
         }
 
-        var extractedFacts = aiResponse
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(f => f.Trim())
-            .Where(f => !string.IsNullOrWhiteSpace(f))
-            .ToList();
-
-        var newFacts = extractedFacts
-            .Except(state.KeyFacts, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        return newFacts.AsReadOnly();
+        return aiResponse;
     }
 
-    private async Task AddKeyFactsAsync(GameState state)
+    private async Task AddKeyFactsJsonAsync(GameState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        var newFacts = await GetKeyFactsAsync(state);
-        var distinctFacts = newFacts.Except(state.KeyFacts, StringComparer.OrdinalIgnoreCase);
-        state.KeyFacts.AddRange(distinctFacts);
+        var keyFactsJson = await GetKeyFactsJsonAsync(state);
+        state.KeyFactsJson = keyFactsJson;
     }
 }
 
