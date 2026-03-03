@@ -89,15 +89,12 @@ public class GameEngine
             throw new KeyFactExtractionException("Failed to extract key facts from AI.", ex);
         }
 
-        if (string.IsNullOrWhiteSpace(aiResponse))
-        {
-            return "{}";
-        }
+		return string.IsNullOrWhiteSpace(aiResponse) 
+			? "{}" 
+			: aiResponse;
+	}
 
-        return aiResponse;
-    }
-
-    private async Task AddKeyFactsJsonAsync(GameState state)
+	private async Task AddKeyFactsJsonAsync(GameState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
