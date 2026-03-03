@@ -28,5 +28,24 @@ public static class KeyFacts
         Story:
         {story}
         """;
+
+    public static string BuildUpdatePrompt(string currentJson, string latestTurn) =>
+        $"""
+        Update the existing key facts JSON by incorporating the new story content below.
+
+        Rules:
+        - Return the full updated JSON, not a diff.
+        - Preserve all existing facts that are not contradicted by the new content.
+        - Update fields where facts have changed (e.g. current location, character status).
+        - Add new facts discovered in the new content.
+        - Do NOT remove array entries unless the story explicitly contradicts them.
+        - Return ONLY valid JSON (no additional text).
+
+        Current key facts:
+        {currentJson}
+
+        New story content:
+        {latestTurn}
+        """;
 }
 

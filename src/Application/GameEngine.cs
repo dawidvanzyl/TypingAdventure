@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Application.Exceptions;
 using Application.GenreDetection;
 using Application.Interfaces;
@@ -75,29 +76,48 @@ public class GameEngine
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        var fullStory = string.Join("\n\n", state.StoryLog);
+        var latestTurn = state.StoryLog.LastOrDefault() ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(fullStory))
+        if (string.IsNullOrWhiteSpace(latestTurn))
         {
             return "{}";
         }
+
+        var isFreshExtraction = string.IsNullOrWhiteSpace(state.KeyFactsJson)
+            || state.KeyFactsJson == "{}";
+
+        var userPrompt = isFreshExtraction
+            ? KeyFacts.BuildKeyFactsPrompt(latestTurn)
+            : KeyFacts.BuildUpdatePrompt(state.KeyFactsJson, latestTurn);
 
         string aiResponse;
         try
         {
             aiResponse = await _aiClient.GetCompletionAsync(
                 KeyFacts.BuildSystemPrompt(GenreSchema.For(state.DetectedGenre)),
-                KeyFacts.BuildKeyFactsPrompt(fullStory));
+                userPrompt);
         }
         catch (Exception ex)
         {
             throw new KeyFactExtractionException("Failed to extract key facts from AI.", ex);
         }
 
-		return string.IsNullOrWhiteSpace(aiResponse) 
-			? "{}" 
-			: aiResponse;
-	}
+        if (string.IsNullOrWhiteSpace(aiResponse))
+        {
+            return state.KeyFactsJson;
+        }
+
+        try
+        {
+            JsonDocument.Parse(aiResponse);
+        }
+        catch (JsonException)
+        {
+            return state.KeyFactsJson;
+        }
+
+        return aiResponse;
+    }
 
 	private async Task AddKeyFactsJsonAsync(GameState state)
     {
