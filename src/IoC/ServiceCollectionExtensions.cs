@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Application;
-using Application.GenreDetection;
 using Application.Interfaces;
 using Infrastructure.AI;
 

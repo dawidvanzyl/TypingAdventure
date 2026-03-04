@@ -1,5 +1,4 @@
 using Application;
-using Application.GenreDetection;
 using Application.Tests.Fakes;
 using Domain.Game;
 using Domain.Game.Enums;
@@ -17,6 +16,7 @@ public class GameEngineTests
 		fake.NextResponses.Enqueue("Fantasy");
 		fake.NextResponses.Enqueue("Generated premise");
 		fake.NextResponses.Enqueue("Generated summary");
+		fake.NextResponses.Enqueue("""{"setting": {"currentLocation": "Forest"}}""");
 		var engine = new GameEngine(fake, new GenreDetector(fake));
 		var state = new GameState();
 
@@ -27,32 +27,24 @@ public class GameEngineTests
 		state.StoryLog.Should().Contain("Generated premise");
 		state.StorySummary.Should().NotBeEmpty();
 		state.DetectedGenre.Should().Be(Genre.Fantasy);
-		fake.Calls.Should().HaveCount(3);
-		fake.Calls[1].UserPrompt.Should().Contain("Generate a unique mystery premise");
-	}
+		fake.Calls.Should().HaveCount(4);
+		
+		var genreDetectionCall = fake.Calls[0];
+		genreDetectionCall.UserPrompt.Should().Contain("genre");
+		genreDetectionCall.UserPrompt.Should().Contain("mystery");
 
-	[Fact]
-	public async Task ApplyTurnAsync_WithEmptyKeyFacts_UsesFreshExtractionPrompt()
-	{
-		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake, new GenreDetector(fake));
-		var state = new GameState
-		{
-			Premise = "Premise",
-			StorySummary = "Summary",
-			KeyFactsJson = "{}"
-		};
-		state.StoryLog.Add("Premise");
-		fake.NextResponses.Enqueue("Turn response");
-		fake.NextResponses.Enqueue("Updated summary");
-		fake.NextResponses.Enqueue("""{"setting": {"currentLocation": "Manor"}}""");
+		var premiseCall = fake.Calls[1];
+		premiseCall.UserPrompt.Should().Contain("Generate a unique mystery premise");
 
-		await engine.ApplyTurnAsync(state, "look around");
-
-		var keyFactsCall = fake.Calls[2];
-		keyFactsCall.UserPrompt.Should().Contain("Turn response");
+		var summaryCall = fake.Calls[2];
+		summaryCall.UserPrompt.Should().Contain("summary");
+		summaryCall.UserPrompt.Should().Contain("Generated premise");
+		
+		var keyFactsCall = fake.Calls[3];
+		keyFactsCall.UserPrompt.Should().Contain("Extract key facts from the following story");
+		keyFactsCall.UserPrompt.Should().Contain("Generated premise");
 		keyFactsCall.UserPrompt.Should().NotContain("Current key facts");
-		state.KeyFactsJson.Should().Contain("Manor");
+		state.KeyFactsJson.Should().Contain("Forest");
 	}
 
 	[Fact]

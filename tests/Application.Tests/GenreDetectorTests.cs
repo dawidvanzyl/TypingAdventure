@@ -1,4 +1,4 @@
-using Application.GenreDetection;
+using Application;
 using Application.Tests.Fakes;
 using Domain.Game.Enums;
 using FluentAssertions;
