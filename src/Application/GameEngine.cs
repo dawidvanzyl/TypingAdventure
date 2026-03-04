@@ -98,7 +98,7 @@ public class GameEngine
 				return;
 			}
 
-			JsonDocument.Parse(aiResponse);
+			using var _ = JsonDocument.Parse(aiResponse);
 			state.KeyFactsJson = aiResponse;
 		}
 		catch (JsonException)
