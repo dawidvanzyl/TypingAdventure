@@ -27,6 +27,7 @@ public class GameEngine
 
 	public async Task<string> GeneratePremiseAsync(GameState state, string theme)
 	{
+		ArgumentNullException.ThrowIfNull(state);
 		state.DetectedGenre = await _genreDetector.DetectAsync(theme);
 
 		var premise = await _aiClient.GetCompletionAsync(
