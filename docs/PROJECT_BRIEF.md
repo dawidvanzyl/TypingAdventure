@@ -76,13 +76,13 @@ This is the intended high-level flow of the game, regardless of internal impleme
 - **Implementation**: After each turn, the `GameEngine.ApplyTurnAsync` method calls a private `UpdateKeyFactsAsync` method that:
   - Uses the AI to extract or refine key facts based on the latest story context
   - Merges new information into the existing facts while avoiding unnecessary duplication
-  - Uses the `Application.Prompts.KeyFacts` class for the system prompt and prompt builder
+  - Uses the `KeyFacts` helper to build the system prompt and interpret the model's response
 - **Prompt System**: The extraction logic uses:
-  - `Application.Prompts.KeyFacts.SystemPrompt`: Instructs the model to extract factual information (not narrative), format as `<Category>: <Value>`, avoid speculation, and not repeat existing facts
-  - `Application.Prompts.KeyFacts.BuildKeyFactsPrompt(story)`: Builds the user prompt containing the story text
+  - `KeyFacts.BuildSystemPrompt(schema)`: Builds a system prompt (based on a provided schema) that instructs the model to extract factual information (not narrative), avoid speculation, and return **JSON-only** output matching the schema
+  - `Application.Prompts.KeyFacts.BuildKeyFactsPrompt(story)`: Builds the user prompt containing the relevant story text for fact extraction
 - **Storage**: Extracted facts are stored in `GameState.KeyFactsJson` as a JSON representation of the current world facts.
 - **Usage**: Facts are included in the turn prompt (via `Application.Prompts.Narrator.BuildTurnPrompt`) so the AI respects established state when generating responses.
-- **Error Handling**: If key fact extraction fails, a `KeyFactExtractionException` is thrown; this is caught at the call site and can be logged or handled as needed.
+- **Error Handling**: If the model returns invalid or unparsable JSON for key facts, the response is ignored when updating `GameState.KeyFactsJson` (no dedicated `KeyFactExtractionException` handling is performed in `GameEngine`).
 
 ---
 
