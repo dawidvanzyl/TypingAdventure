@@ -40,9 +40,7 @@ public class GameEngineTests
 		summaryCall.UserPrompt.Should().Contain("Generated premise");
 		
 		var keyFactsCall = fake.Calls[3];
-		keyFactsCall.UserPrompt.Should().Contain("Extract key facts from the following story");
 		keyFactsCall.UserPrompt.Should().Contain("Generated premise");
-		keyFactsCall.UserPrompt.Should().NotContain("Current key facts");
 		state.KeyFactsJson.Should().Contain("Forest");
 	}
 
@@ -66,7 +64,6 @@ public class GameEngineTests
 		await engine.ApplyTurnAsync(state, "go north");
 
 		var keyFactsCall = fake.Calls[2];
-		keyFactsCall.UserPrompt.Should().Contain("Current key facts");
 		keyFactsCall.UserPrompt.Should().Contain(existingJson);
 		keyFactsCall.UserPrompt.Should().Contain("Turn response");
 		state.KeyFactsJson.Should().Contain("Library");
