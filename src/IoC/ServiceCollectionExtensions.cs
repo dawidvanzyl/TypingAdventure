@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration)
     {
         services.AddSingleton<IAiClient>(sp => new AiClient(configuration));
+        services.AddTransient<GenreDetector>();
         services.AddTransient<GameEngine>();
 
         return services;

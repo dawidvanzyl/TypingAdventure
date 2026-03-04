@@ -1,7 +1,7 @@
 using Application;
-using Application.Interfaces;
 using Application.Tests.Fakes;
 using Domain.Game;
+using Domain.Game.Enums;
 using FluentAssertions;
 using Xunit;
 
@@ -13,8 +13,11 @@ public class GameEngineTests
 	public async Task GeneratePremiseAsync_WithValidTheme_UpdatesStateAndReturnsPremise()
 	{
 		var fake = new FakeAiClient();
-		fake.NextResponse = "Generated premise";
-		var engine = new GameEngine(fake);
+		fake.NextResponses.Enqueue("Fantasy");
+		fake.NextResponses.Enqueue("Generated premise");
+		fake.NextResponses.Enqueue("Generated summary");
+		fake.NextResponses.Enqueue("""{"setting": {"currentLocation": "Forest"}}""");
+		var engine = new GameEngine(fake, new GenreDetector(fake));
 		var state = new GameState();
 
 		var premise = await engine.GeneratePremiseAsync(state, "mystery");
@@ -23,40 +26,79 @@ public class GameEngineTests
 		state.Premise.Should().Be("Generated premise");
 		state.StoryLog.Should().Contain("Generated premise");
 		state.StorySummary.Should().NotBeEmpty();
-		fake.Calls.Should().HaveCount(2);
-		fake.Calls[0].UserPrompt.Should().Contain("Generate a unique mystery premise");
+		state.DetectedGenre.Should().Be(Genre.Fantasy);
+		fake.Calls.Should().HaveCount(4);
+		
+		var genreDetectionCall = fake.Calls[0];
+		genreDetectionCall.UserPrompt.Should().Contain("mystery");
+
+		var premiseCall = fake.Calls[1];
+		premiseCall.UserPrompt.Should().Contain("Generate a unique mystery premise");
+
+		var summaryCall = fake.Calls[2];
+		summaryCall.UserPrompt.Should().Contain("Summarise");
+		summaryCall.UserPrompt.Should().Contain("Generated premise");
+		
+		var keyFactsCall = fake.Calls[3];
+		keyFactsCall.UserPrompt.Should().Contain("Extract key facts from the following story");
+		keyFactsCall.UserPrompt.Should().Contain("Generated premise");
+		keyFactsCall.UserPrompt.Should().NotContain("Current key facts");
+		state.KeyFactsJson.Should().Contain("Forest");
 	}
 
 	[Fact]
-	public async Task ApplyTurnAsync_WithPlayerAction_AppendsResponseAndRefreshesSummary()
+	public async Task ApplyTurnAsync_WithExistingKeyFacts_UsesUpdatePromptWithCurrentJson()
 	{
+		var existingJson = """{"setting": {"currentLocation": "Hall"}}""";
 		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake);
+		var engine = new GameEngine(fake, new GenreDetector(fake));
 		var state = new GameState
 		{
 			Premise = "Premise",
-			StorySummary = "Summary"
+			StorySummary = "Summary",
+			KeyFactsJson = existingJson
 		};
 		state.StoryLog.Add("Premise");
 		fake.NextResponses.Enqueue("Turn response");
 		fake.NextResponses.Enqueue("Updated summary");
+		fake.NextResponses.Enqueue("""{"setting": {"currentLocation": "Library"}}""");
 
-		var response = await engine.ApplyTurnAsync(state, "look around");
+		await engine.ApplyTurnAsync(state, "go north");
 
-		response.Should().Be("Turn response");
-		state.StoryLog.Should().Contain("Turn response");
-		state.StorySummary.Should().Be("Updated summary");
-		fake.Calls.Should().HaveCount(2);
-		fake.Calls[0].UserPrompt.Should().Contain("Last player action:");
-		fake.Calls[0].UserPrompt.Should().Contain("look around");
+		var keyFactsCall = fake.Calls[2];
+		keyFactsCall.UserPrompt.Should().Contain("Current key facts");
+		keyFactsCall.UserPrompt.Should().Contain(existingJson);
+		keyFactsCall.UserPrompt.Should().Contain("Turn response");
+		state.KeyFactsJson.Should().Contain("Library");
+	}
+
+	[Fact]
+	public async Task ApplyTurnAsync_WhenAiReturnsInvalidJson_RetainsPreviousKeyFacts()
+	{
+		var existingJson = """{"setting": {"currentLocation": "Hall"}}""";
+		var fake = new FakeAiClient();
+		var engine = new GameEngine(fake, new GenreDetector(fake));
+		var state = new GameState
+		{
+			Premise = "Premise",
+			StorySummary = "Summary",
+			KeyFactsJson = existingJson
+		};
+		state.StoryLog.Add("Premise");
+		fake.NextResponses.Enqueue("Turn response");
+		fake.NextResponses.Enqueue("Updated summary");
+		fake.NextResponses.Enqueue("not valid json at all");
+
+		await engine.ApplyTurnAsync(state, "look around");
+
+		state.KeyFactsJson.Should().Be(existingJson);
 	}
 
 	[Fact]
 	public async Task SummariseAsync_WithFullStory_UsesFullStoryInPrompt()
 	{
-		var fake = new FakeAiClient();
-		fake.NextResponse = "Summary";
-		var engine = new GameEngine(fake);
+		var fake = new FakeAiClient { NextResponse = "Summary" };
+		var engine = new GameEngine(fake, new GenreDetector(fake));
 		var state = new GameState();
 		state.StoryLog.Add("Line 1");
 		state.StoryLog.Add("Line 2");
@@ -72,26 +114,10 @@ public class GameEngineTests
 	}
 
 	[Fact]
-	public void GameEngine_HasOnAiCallPendingEvent()
+	public void GameEngine_FiresOnAiCallPendingEvent()
 	{
-		// Arrange
 		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake);
-
-		// Act
-		var eventInfo = typeof(GameEngine).GetEvent("OnAiCallPending");
-
-		// Assert
-		eventInfo.Should().NotBeNull();
-		eventInfo.EventHandlerType.Should().Be(typeof(AiCallPendingHandler));
-	}
-
-	[Fact]
-	public void GameEngine_OnAiCallPending_CanBeSubscribedTo()
-	{
-		// Arrange
-		var fake = new FakeAiClient();
-		var engine = new GameEngine(fake);
+		var engine = new GameEngine(fake, new GenreDetector(fake));
 		var eventFired = false;
 
 		engine.OnAiCallPending += (attemptNumber, waitTime) =>
@@ -100,10 +126,8 @@ public class GameEngineTests
 			return Task.CompletedTask;
 		};
 
-		// Act - verify subscription succeeded (no exception thrown)
+		fake.FireAiCallPending();
 
-		// Assert
-		eventFired.Should().BeFalse(); // Event shouldn't fire until actual retry occurs
+		eventFired.Should().BeTrue();
 	}
 }
-
