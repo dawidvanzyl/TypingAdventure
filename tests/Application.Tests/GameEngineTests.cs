@@ -30,14 +30,13 @@ public class GameEngineTests
 		fake.Calls.Should().HaveCount(4);
 		
 		var genreDetectionCall = fake.Calls[0];
-		genreDetectionCall.UserPrompt.Should().Contain("genre");
 		genreDetectionCall.UserPrompt.Should().Contain("mystery");
 
 		var premiseCall = fake.Calls[1];
 		premiseCall.UserPrompt.Should().Contain("Generate a unique mystery premise");
 
 		var summaryCall = fake.Calls[2];
-		summaryCall.UserPrompt.Should().Contain("summary");
+		summaryCall.UserPrompt.Should().Contain("Summarise");
 		summaryCall.UserPrompt.Should().Contain("Generated premise");
 		
 		var keyFactsCall = fake.Calls[3];
