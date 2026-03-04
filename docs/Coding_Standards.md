@@ -25,7 +25,7 @@ This project uses **`.editorconfig`** to enforce consistent code formatting and 
 - **Access modifiers**: All non-interface members must have explicit access modifiers (e.g., `public`, `private`, `internal`).
 - **Using directives**: Must appear outside the namespace declaration.
 - **Namespaces**: Must use file-scoped syntax (e.g., `namespace Foo;` instead of `namespace Foo { ... }`).
-- **Line endings**: CRLF (`\r\n`) for all files in this repository — enforced by `.editorconfig`.
+- **Line endings**: CRLF (`\r\n`) for all C# source files — enforced by `.editorconfig` (other files should also use CRLF where practical).
 - **Indentation**: 4 spaces, keep tabs.
 
 **For the complete list of formatting rules, see the [`.editorconfig`](../.editorconfig) file in the repository root.** Most rules are enforced at the `error` or `warning` level and will be caught during build or by your IDE.
