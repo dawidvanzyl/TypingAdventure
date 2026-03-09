@@ -62,12 +62,19 @@ public event AiCallPendingHandler OnAiCallPending;
 // ✅ CORRECT: async subscription
 engine.OnAiCallPending += async (attemptNumber, waitTime) =>
 {
+    // UI/console entry-point example: console output is allowed here. Infrastructure must not write directly to the console.
     Console.WriteLine($"Retrying in {waitTime.TotalSeconds}s (attempt {attemptNumber})...");
     await Task.Delay(waitTime);
 };
 
-// ❌ INCORRECT: async void handler — exceptions are unobservable
-engine.OnAiCallPending += async (attemptNumber, waitTime) => { ... }; // implicitly async void
+// ❌ INCORRECT: EventHandler is void-returning, so this becomes an async void handler — exceptions are unobservable
+public event EventHandler? OnSomethingHappened;
+
+engine.OnSomethingHappened += async (sender, args) =>
+{
+    await Task.Delay(1000);
+    // ...
+}; // async void
 ```
 
 ### One Class/Record/Struct per File
@@ -257,9 +264,10 @@ Choose the right strategy based on whether a failure is recoverable at the call 
   // ✅ CORRECT: genre detection is best-effort; return a safe default on parse failure only
   public async Task<Genre> DetectAsync(string theme)
   {
-      try { ... }
-      catch (ArgumentException)       { return Genre.Agnostic; }
-      catch (InvalidOperationException) { return Genre.Agnostic; }
+      var response = await _aiClient.GetCompletionAsync(...);
+      return Enum.TryParse<Genre>(response?.Trim(), ignoreCase: true, out var genre)
+          ? genre
+          : Genre.Agnostic;
       // AI client exceptions are NOT caught here — they propagate
   }
   ```

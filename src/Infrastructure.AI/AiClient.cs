@@ -32,33 +32,26 @@ public class AiClient : IAiClient
 	{
 		return await _retryPolicy.ExecuteAsync(async () =>
 		{
-			try
+			var messages = new Message[]
 			{
-				var messages = new Message[]
-				{
-					new Message { Role = "system", Content = systemPrompt },
-					new Message { Role = "user", Content = userPrompt },
-				};
+				new Message { Role = "system", Content = systemPrompt },
+				new Message { Role = "user", Content = userPrompt },
+			};
 
-				var maxTokens = _configuration.GetValue<int>("AiClient:MaxTokens");
-				var temperature = _configuration.GetValue<float>("AiClient:Temperature");
+			var maxTokens = _configuration.GetValue<int>("AiClient:MaxTokens");
+			var temperature = _configuration.GetValue<float>("AiClient:Temperature");
 
-				var options = new ChatCompletionOptions
-				{
-					MaxTokens = maxTokens,
-					Temperature = temperature
-				};
-
-				var completion = await _client
-					.GetChatClient(_configuration["AiClient:Model"])
-					.CompleteChatAsync(messages, options);
-
-				return completion.Choices[0].Message.Content;
-			}
-			catch (Exception)
+			var options = new ChatCompletionOptions
 			{
-				throw;
-			}
+				MaxTokens = maxTokens,
+				Temperature = temperature
+			};
+
+			var completion = await _client
+				.GetChatClient(_configuration["AiClient:Model"])
+				.CompleteChatAsync(messages, options);
+
+			return completion.Choices[0].Message.Content;
 		});
 	}
 
