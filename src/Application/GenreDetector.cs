@@ -15,25 +15,14 @@ public class GenreDetector(IAiClient aiClient)
 			return Genre.Agnostic;
 		}
 
-		try
-		{
-			var response = await _aiClient.GetCompletionAsync(
-				GenreDetectorPrompts.SystemPrompt,
-				GenreDetectorPrompts.BuildDetectPrompt(theme));
+		var response = await _aiClient.GetCompletionAsync(
+			GenreDetectorPrompts.SystemPrompt,
+			GenreDetectorPrompts.BuildDetectPrompt(theme));
 
-			var trimmed = response?.Trim() ?? string.Empty;
+		var trimmed = response?.Trim() ?? string.Empty;
 
-			return Enum.TryParse<Genre>(trimmed, ignoreCase: true, out var detected)
-				? detected
-				: Genre.Agnostic;
-		}
-		catch (ArgumentException)
-		{
-			return Genre.Agnostic;
-		}
-		catch (InvalidOperationException)
-		{
-			return Genre.Agnostic;
-		}
+		return Enum.TryParse<Genre>(trimmed, ignoreCase: true, out var detected)
+			? detected
+			: Genre.Agnostic;
 	}
 }
