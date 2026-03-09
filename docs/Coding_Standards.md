@@ -47,6 +47,29 @@ Naming conventions are enforced by `.editorconfig` rules. However, understand th
 - **Patterns**: Use `async/await` syntax and actual async/await patterns are enforced by `.editorconfig` rules (e.g., preference for async methods, handling of `Task` return types).
 - **Avoid `async void`**: Do not use `async void` except for event handlers. Prefer `async Task` for fire-and-forget patterns or return an awaitable `Task`.
 
+### Event Handler Patterns
+
+- **Use `delegate Task` for custom event handlers** instead of `EventHandler<T>` or `async void` delegates. This ensures callers can `await` the handler and exceptions propagate correctly.
+- **Naming**: Delegate types for event handlers follow the `{EventName}Handler` convention (e.g., `AiCallPendingHandler`).
+- **Subscriptions**: When subscribing with an async lambda, return `Task.CompletedTask` if there is nothing to await.
+
+```csharp
+// ✅ CORRECT: delegate returns Task
+public delegate Task AiCallPendingHandler(int attemptNumber, TimeSpan waitTime);
+
+public event AiCallPendingHandler OnAiCallPending;
+
+// ✅ CORRECT: async subscription
+engine.OnAiCallPending += async (attemptNumber, waitTime) =>
+{
+    Console.WriteLine($"Retrying in {waitTime.TotalSeconds}s (attempt {attemptNumber})...");
+    await Task.Delay(waitTime);
+};
+
+// ❌ INCORRECT: async void handler — exceptions are unobservable
+engine.OnAiCallPending += async (attemptNumber, waitTime) => { ... }; // implicitly async void
+```
+
 ### One Class/Record/Struct per File
 
 - Each file must contain exactly one top-level class, record, or struct.
@@ -55,6 +78,53 @@ Naming conventions are enforced by `.editorconfig` rules. However, understand th
 ### readonly Fields
 
 - Fields that are not reassigned after initialization should be marked `readonly`. This is enforced by `.editorconfig` rules as a warning-level preference.
+
+### Modern C# Features
+
+Adopt modern C# language features where they improve clarity. Do not introduce a modern feature purely for novelty — prefer it when it genuinely reduces noise or makes intent clearer.
+
+#### Primary Constructors (C# 12)
+Prefer primary constructors for classes and records that simply receive and store dependencies. The corresponding backing field assignment is implicit.
+
+```csharp
+// ✅ PREFERRED: primary constructor
+public class GenreDetector(IAiClient aiClient)
+{
+    private readonly IAiClient _aiClient = aiClient;
+    ...
+}
+
+// ⚠️ ALSO ACCEPTABLE: traditional constructor
+public class GenreDetector
+{
+    private readonly IAiClient _aiClient;
+    public GenreDetector(IAiClient aiClient) => _aiClient = aiClient;
+}
+```
+
+#### Collection Expressions (C# 12)
+Use collection expressions (`[]`) for empty or inline collection initialization instead of `new List<T>()` or `Array.Empty<T>()`.
+
+```csharp
+// ✅ PREFERRED
+public List<AiClientCall> Calls { get; } = [];
+
+// ⚠️ ALSO ACCEPTABLE
+public List<AiClientCall> Calls { get; } = new List<AiClientCall>();
+```
+
+#### Pattern Matching
+Use pattern matching in `switch` expressions and `is` checks to express intent concisely. Enforced and preferred by `.editorconfig`.
+
+```csharp
+// ✅ PREFERRED
+var label = genre switch
+{
+    Genre.Fantasy => "Fantasy",
+    Genre.Horror  => "Horror",
+    _             => "Other"
+};
+```
 
 ### Formatting Standards Enforced by .editorconfig
 
@@ -162,14 +232,59 @@ The following rules are automatically enforced by `.editorconfig` and should not
 
 ## Error Handling & Logging
 
-- **Local handling**:
-  - Use `try/catch` where an operation can reasonably fail (I/O, network calls, deserialization, etc.).
-  - Catch the narrowest exception type that makes sense.
-- **UI-layer responsibility**:
-  - The UI/entry layer is responsible for how errors are communicated to the user (logging, messages).
-  - Non-UI layers should throw exceptions or return error results rather than writing directly to the console, unless there is a clear reason.
-- **AI calls**:
-  - Handle transient failures around AI calls (timeouts, network issues) and surface a meaningful message at the UI layer.
+### Local Handling
+
+- Use `try/catch` where an operation can reasonably fail (I/O, network calls, deserialization, etc.).
+- **Catch the narrowest exception type that makes sense** — never use a bare `catch` or `catch (Exception)` to silently swallow all failures.
+
+### Exception Propagation vs. Graceful Degradation
+
+Choose the right strategy based on whether a failure is recoverable at the call site:
+
+- **Propagate** when the caller must know about the failure (e.g., a network call that the UI should report to the user):
+  ```csharp
+  // ✅ CORRECT: let the AI client failure travel up to the UI layer
+  public async Task<string> GetCompletionAsync(string prompt)
+  {
+      try { ... }
+      catch (JsonException ex) { throw new KeyFactExtractionException("Failed to parse key facts.", ex); }
+      // HttpRequestException is not caught here — it propagates to the retry policy and then the UI
+  }
+  ```
+
+- **Degrade gracefully** when a non-critical service can safely return a sensible default and callers should not be interrupted:
+  ```csharp
+  // ✅ CORRECT: genre detection is best-effort; return a safe default on parse failure only
+  public async Task<Genre> DetectAsync(string theme)
+  {
+      try { ... }
+      catch (ArgumentException)       { return Genre.Agnostic; }
+      catch (InvalidOperationException) { return Genre.Agnostic; }
+      // AI client exceptions are NOT caught here — they propagate
+  }
+  ```
+
+### Logging in Infrastructure Layer
+
+- **Infrastructure layers must not write directly to the console.** `Console.WriteLine` in a non-UI layer is a standards violation.
+- If diagnostic logging is needed in Infrastructure, inject and use `ILogger<T>` (Microsoft.Extensions.Logging) rather than writing to standard output.
+- **User-facing error messages are always the responsibility of the UI layer.** Infrastructure and Application layers communicate failures via exceptions or error result types.
+
+```csharp
+// ❌ INCORRECT: Infrastructure writing directly to console
+catch (Exception ex) { Console.WriteLine($"An error occurred: {ex.Message}"); throw; }
+
+// ✅ CORRECT: rethrow and let the UI layer handle presentation
+catch (Exception) { throw; }
+
+// ✅ ALSO CORRECT: use ILogger for structured diagnostics (when injected)
+catch (Exception ex) { _logger.LogError(ex, "AI call failed"); throw; }
+```
+
+### AI Calls
+
+- Handle transient failures around AI calls (timeouts, network issues) with a retry policy (e.g., Polly).
+- Surface a meaningful message at the UI layer once all retries are exhausted.
 
 ---
 
@@ -235,6 +350,46 @@ The following rules are automatically enforced by `.editorconfig` and should not
 - Use **fakes/mocks** for external dependencies (e.g., AI client).
 - **Every new feature should come with at least one meaningful test**.
 - When changing existing behavior, update or add tests to reflect the new expected behavior.
+
+### Test Doubles (Fakes)
+
+Prefer **hand-written fakes** over mocking frameworks for external dependencies. Fakes are easier to read, easier to extend, and avoid coupling tests to internal call signatures.
+
+A well-designed fake should:
+- Implement the same interface as the real dependency.
+- Record every call it receives so tests can assert on interactions.
+- Use a `Queue<string>` (or similar) to return pre-configured responses, keeping each test self-contained.
+
+```csharp
+// ✅ CORRECT: Fake with call tracking and response queuing
+public class FakeAiClient : IAiClient
+{
+    public List<AiClientCall> Calls { get; } = [];
+    public Queue<string> Responses { get; } = new();
+
+    public Task<string> GetCompletionAsync(string systemPrompt, string userPrompt)
+    {
+        Calls.Add(new AiClientCall(systemPrompt, userPrompt));
+        return Task.FromResult(Responses.TryDequeue(out var response) ? response : string.Empty);
+    }
+}
+
+// ✅ CORRECT: usage in a test
+[Fact]
+public async Task GeneratePremiseAsync_WithValidTheme_CallsAiClientOnce()
+{
+    // Arrange
+    var fake = new FakeAiClient();
+    fake.Responses.Enqueue("A brave knight sets out on a perilous quest.");
+    var engine = new GameEngine(fake);
+
+    // Act
+    await engine.GeneratePremiseAsync("medieval fantasy");
+
+    // Assert
+    fake.Calls.Should().HaveCount(1);
+}
+```
 
 ---
 

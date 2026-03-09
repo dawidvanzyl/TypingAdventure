@@ -55,9 +55,8 @@ public class AiClient : IAiClient
 
 				return completion.Choices[0].Message.Content;
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				Console.WriteLine($"An error occurred: {ex.Message}");
 				throw;
 			}
 		});
