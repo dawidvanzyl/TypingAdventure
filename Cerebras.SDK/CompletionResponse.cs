@@ -1,6 +1,9 @@
-﻿namespace Cerebras.SDK;
+﻿using System.Text.Json.Serialization;
+
+namespace Cerebras.SDK;
 
 public class CompletionResponse
 {
-    public Choice[] Choices { get; set; }
+	[JsonPropertyName("choices")]
+	public Choice[] Choices { get; set; }
 }
