@@ -16,7 +16,7 @@ The AI narrates the world and enforces rules.
 ## Core Structure
 
 * `GameState` – stores story log and summarised key facts
-* `AiClient` – wraps the OpenAI Chat API
+* `AiClient` – wraps the AI provider API
 * Narrator system prompt – defines game rules
 * Periodic fact summarisation to reduce token usage
 
@@ -24,12 +24,22 @@ See also: `docs/Coding_Standards.md` for coding style, testing expectations, and
 
 ## Run
 
-1. Add your AI client API key
-2. Configure model (default: `gpt-5-mini`)
-3. Run:
+1. Create `src/UI.Console/appsettings.Development.json` with your AI provider API key:
+
+```json
+{
+  "AiClient": {
+    "ApiKey": "<your-api-key>"
+  }
+}
+```
+
+> This file is git-ignored and must never be committed.
+
+2. Run:
 
 ```bash
-dotnet run
+dotnet run --project src/UI.Console
 ```
 
 ## Purpose
