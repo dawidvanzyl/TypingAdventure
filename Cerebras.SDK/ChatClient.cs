@@ -18,11 +18,7 @@ public class ChatClient
 		var requestBody = new
 		{
 			model = _model,
-			messages = messages.Select(m => new
-			{
-				role = m.Role,
-				content = m.Content
-			}),
+			messages = messages,
 			max_tokens = options.MaxTokens,
 			temperature = options.Temperature
 		};
@@ -37,6 +33,10 @@ public class ChatClient
 
 		var responseBody = await response.Content.ReadAsStringAsync();
 		var completionResponse = JsonSerializer.Deserialize<CompletionResponse>(responseBody);
+		if (completionResponse is null)
+		{
+			throw new JsonException("Deserialization of CompletionResponse returned null. Response body: " + responseBody);
+		}
 
 		return completionResponse;
 	}
