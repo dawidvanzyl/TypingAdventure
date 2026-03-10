@@ -15,7 +15,7 @@ public class GameStateTests
         state.StorySummary.Should().BeEmpty();
         state.GameOver.Should().BeFalse();
         state.StoryLog.Should().BeEmpty();
-        state.KeyFacts.Should().BeEmpty();
+		state.KeyFacts.Should().Be("{}");
         state.Inventory.Should().BeEmpty();
     }
 }

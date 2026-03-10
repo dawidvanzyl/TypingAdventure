@@ -1,6 +1,9 @@
-﻿namespace Cerebras.SDK;
+﻿using System.Text.Json.Serialization;
+
+namespace Cerebras.SDK;
 
 public class Choice
 {
-    public Message Message { get; set; }
+	[JsonPropertyName("message")]
+	public Message Message { get; set; }
 }
