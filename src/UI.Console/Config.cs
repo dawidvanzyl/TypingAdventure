@@ -11,6 +11,7 @@ internal static class Config
         _configuration = new ConfigurationBuilder()
            .SetBasePath(Directory.GetCurrentDirectory())
            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+           .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
            .Build();
     }
 
