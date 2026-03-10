@@ -8,7 +8,7 @@
 - [x] **Fix AiClient Retry Counter Bug**
   The `attempt` counter in the Polly retry policy is a shared closure variable that never resets between calls. After the first retried call, subsequent retries use wrong wait times and will eventually throw `IndexOutOfRangeException`.
 
-- [ ] **Secure API Key — appsettings.Development.json**
+- [x] **Secure API Key — appsettings.Development.json**
   Move the live Cerebras API key out of the committed `appsettings.json` into `appsettings.Development.json`, add that file to `.gitignore`, and document the setup in the README.
 
 - [ ] **Unify JSON Libraries**
