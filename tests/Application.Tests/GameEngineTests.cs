@@ -43,7 +43,7 @@ public class GameEngineTests
 		keyFactsCall.UserPrompt.Should().Contain("Extract key facts from the following story");
 		keyFactsCall.UserPrompt.Should().Contain("Generated premise");
 		keyFactsCall.UserPrompt.Should().NotContain("Current key facts");
-		state.KeyFactsJson.Should().Contain("Forest");
+		state.KeyFacts.Should().Contain("Forest");
 	}
 
 	[Fact]
@@ -56,7 +56,7 @@ public class GameEngineTests
 		{
 			Premise = "Premise",
 			StorySummary = "Summary",
-			KeyFactsJson = existingJson
+			KeyFacts = existingJson
 		};
 		state.StoryLog.Add("Premise");
 		fake.NextResponses.Enqueue("Turn response");
@@ -69,7 +69,7 @@ public class GameEngineTests
 		keyFactsCall.UserPrompt.Should().Contain("Current key facts");
 		keyFactsCall.UserPrompt.Should().Contain(existingJson);
 		keyFactsCall.UserPrompt.Should().Contain("Turn response");
-		state.KeyFactsJson.Should().Contain("Library");
+		state.KeyFacts.Should().Contain("Library");
 	}
 
 	[Fact]
@@ -82,7 +82,7 @@ public class GameEngineTests
 		{
 			Premise = "Premise",
 			StorySummary = "Summary",
-			KeyFactsJson = existingJson
+			KeyFacts = existingJson
 		};
 		state.StoryLog.Add("Premise");
 		fake.NextResponses.Enqueue("Turn response");
@@ -91,7 +91,7 @@ public class GameEngineTests
 
 		await engine.ApplyTurnAsync(state, "look around");
 
-		state.KeyFactsJson.Should().Be(existingJson);
+		state.KeyFacts.Should().Be(existingJson);
 	}
 
 	[Fact]

@@ -58,7 +58,7 @@ public class GameEngine
 
 		state.StorySummary = await SummariseAsync(state);
 
-		await UpdateKeyFactsAsync(state, KeyFacts.BuildUpdatePrompt(state.KeyFactsJson, response));
+		await UpdateKeyFactsAsync(state, KeyFacts.BuildUpdatePrompt(state.KeyFacts, response));
 
 		return response;
 	}
@@ -99,7 +99,7 @@ public class GameEngine
 			}
 
 			using var _ = JsonDocument.Parse(aiResponse);
-			state.KeyFactsJson = aiResponse;
+			state.KeyFacts = aiResponse;
 		}
 		catch (JsonException)
 		{
