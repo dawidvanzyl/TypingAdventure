@@ -2,10 +2,10 @@
 
 ## Bug Fixes
 
-- [ ] **Fix CI/CD Pipeline**
+- [x] **Fix CI/CD Pipeline**
   GitHub Actions installs .NET 8 but the project targets .NET 10. Update the workflow so builds and tests actually run.
 
-- [ ] **Fix AiClient Retry Counter Bug**
+- [x] **Fix AiClient Retry Counter Bug**
   The `attempt` counter in the Polly retry policy is a shared closure variable that never resets between calls. After the first retried call, subsequent retries use wrong wait times and will eventually throw `IndexOutOfRangeException`.
 
 - [ ] **Secure API Key — appsettings.Development.json**

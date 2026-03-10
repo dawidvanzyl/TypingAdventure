@@ -58,19 +58,13 @@ public class AiClient : IAiClient
 	private IAsyncPolicy<string> BuildRetryPolicy()
 	{
 		var waits = new[] { TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(20) };
-		var attempt = 0;
 
 		return Policy<string>
 			.Handle<HttpRequestException>(ex => ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
 			.Or<TaskCanceledException>()
 			.WaitAndRetryAsync(
 				retryCount: 3,
-				sleepDurationProvider: _ =>
-				{
-					var waitTime = waits[attempt];
-					attempt++;
-					return waitTime;
-				},
+				sleepDurationProvider: retryAttempt => waits[retryAttempt - 1],
 				onRetryAsync: async (outcome, timeSpan, retryCount, context) =>
 				{
 					OnAiCallPending?.Invoke(retryCount, timeSpan);
