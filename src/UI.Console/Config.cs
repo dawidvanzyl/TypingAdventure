@@ -4,16 +4,16 @@ namespace UI.Console;
 
 internal static class Config
 {
-    private static IConfigurationRoot _configuration;
+	private static IConfigurationRoot _configuration;
 
-    static Config()
-    {
-        _configuration = new ConfigurationBuilder()
-           .SetBasePath(Directory.GetCurrentDirectory())
-           .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-           .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
-           .Build();
-    }
+	static Config()
+	{
+		_configuration = new ConfigurationBuilder()
+		   .SetBasePath(Directory.GetCurrentDirectory())
+		   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+		   .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+		   .Build();
+	}
 
-    public static IConfiguration Configuration => _configuration;
+	public static IConfiguration Configuration => _configuration;
 }
