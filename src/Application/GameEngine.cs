@@ -11,7 +11,8 @@ public class GameEngine
 {
 	private readonly IAiClient _aiClient;
 	private readonly GenreDetector _genreDetector;
-	
+	private readonly Regex _trailingWhatDoYouDo = new(@"\s*What do you do\??\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 	public event AiCallPendingHandler OnAiCallPending;
 
 	public GameEngine(IAiClient aiClient, GenreDetector genreDetector)
@@ -90,8 +91,7 @@ public class GameEngine
 
 		state.StoryLog.Add(response);
 
-		var trailingWhatDoYouDo = new Regex(@"\s*What do you do\??\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		return trailingWhatDoYouDo.Replace(response, string.Empty);
+		return _trailingWhatDoYouDo.Replace(response, string.Empty);
 	}
 
 	private async Task UpdateKeyFactsAsync(GameState state, string userPrompt)
