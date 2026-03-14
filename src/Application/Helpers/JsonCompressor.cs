@@ -17,15 +17,8 @@ public static class JsonCompressor
 			return json;
 		}
 
-		try
-		{
-			using var document = JsonDocument.Parse(json);
-			return JsonSerializer.Serialize(document.RootElement, _minifyOptions);
-		}
-		catch (JsonException)
-		{
-			return json;
-		}
+		using var document = JsonDocument.Parse(json);
+		return JsonSerializer.Serialize(document.RootElement, _minifyOptions);
 	}
 
 	public static string MinifyAndStrip(string json)
@@ -35,21 +28,14 @@ public static class JsonCompressor
 			return json;
 		}
 
-		try
-		{
-			var node = JsonNode.Parse(json);
-			if (node is null)
-			{
-				return json;
-			}
-
-			StripNullsAndEmpties(node);
-			return node.ToJsonString(_minifyOptions);
-		}
-		catch (JsonException)
+		var node = JsonNode.Parse(json);
+		if (node is null)
 		{
 			return json;
 		}
+
+		StripNullsAndEmpties(node);
+		return node.ToJsonString(_minifyOptions);
 	}
 
 	private static void StripNullsAndEmpties(JsonNode node)

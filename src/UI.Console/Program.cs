@@ -44,8 +44,14 @@ class Program
 
 			var response = await engine.ApplyTurnAsync(state, playerInput);
 
-			System.Console.WriteLine("\n" + response);
+			if (!state.GameOver)
+			{
+				System.Console.WriteLine("\n" + response);
+			}
 		}
+
+		var finalScene = await engine.ApplyFinalTurnAsync(state);
+		System.Console.WriteLine("\n" + finalScene);
 	}
 }
 

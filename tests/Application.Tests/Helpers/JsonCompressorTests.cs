@@ -34,13 +34,11 @@ public class JsonCompressorTests
 	}
 
 	[Fact]
-	public void Minify_WithInvalidJson_ReturnsInputUnchanged()
+	public void Minify_WithInvalidJson_Throws()
 	{
-		var invalid = "not valid json";
+		var act = () => JsonCompressor.Minify("not valid json");
 
-		var result = JsonCompressor.Minify(invalid);
-
-		result.Should().Be(invalid);
+		act.Should().Throw<Exception>();
 	}
 
 	[Fact]
@@ -98,13 +96,11 @@ public class JsonCompressorTests
 	}
 
 	[Fact]
-	public void MinifyAndStrip_WithInvalidJson_ReturnsInputUnchanged()
+	public void MinifyAndStrip_WithInvalidJson_Throws()
 	{
-		var invalid = "not valid json";
+		var act = () => JsonCompressor.MinifyAndStrip("not valid json");
 
-		var result = JsonCompressor.MinifyAndStrip(invalid);
-
-		result.Should().Be(invalid);
+		act.Should().Throw<Exception>();
 	}
 
 	[Fact]
@@ -122,5 +118,24 @@ public class JsonCompressorTests
 		var result = JsonCompressor.MinifyAndStrip(json);
 
 		result.Should().Contain("\"dangerLevel\":\"critical\"");
+	}
+
+	[Fact]
+	public void MinifyAndStrip_PreservesNestedDangerLevel_WhenPresent()
+	{
+		var json = """{"engine":{"dangerLevel":"critical"},"world":{"setting":{"currentLocation":null}}}""";
+
+		var result = JsonCompressor.MinifyAndStrip(json);
+
+		result.Should().Contain("\"dangerLevel\":\"critical\"");
+		result.Should().NotContain("currentLocation");
+	}
+
+	[Fact]
+	public void MinifyAndStrip_WithDuplicateKeys_Throws()
+	{
+		var act = () => JsonCompressor.MinifyAndStrip("{\"world\":{\"allies\":[\"Gandalf\"],\"allies\":[\"Frodo\"]}}");
+
+		act.Should().Throw<Exception>();
 	}
 }

@@ -5,5 +5,6 @@ public enum DangerLevel
 	Low,
 	Medium,
 	High,
-	Critical
+	Critical,
+	Fatal
 }
