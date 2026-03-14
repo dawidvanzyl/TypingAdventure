@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System.Text.RegularExpressions;
 using Application.Exceptions;
 using Application.Interfaces;
 using Application.Prompts;
@@ -11,6 +11,7 @@ public class GameEngine
 {
 	private readonly IAiClient _aiClient;
 	private readonly GenreDetector _genreDetector;
+	private readonly Regex _trailingWhatDoYouDo = new(@"\s*What do you do\??\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 	public event AiCallPendingHandler OnAiCallPending;
 
@@ -31,7 +32,7 @@ public class GameEngine
 		state.DetectedGenre = await _genreDetector.DetectAsync(theme);
 
 		var premise = await _aiClient.GetCompletionAsync(
-			"You are a creative story narrator.",
+			Narrator.SystemPrompt,
 			Narrator.BuildPremisePrompt(theme ?? string.Empty));
 
 		state.Premise = premise;
@@ -78,6 +79,21 @@ public class GameEngine
 		return summary;
 	}
 
+	public async Task<string> ApplyFinalTurnAsync(GameState state)
+	{
+		ArgumentNullException.ThrowIfNull(state);
+
+		var finalTurnPrompt = Narrator.BuildFinalTurnPrompt(state);
+
+		var response = await _aiClient.GetCompletionAsync(
+			Narrator.SystemPrompt,
+			finalTurnPrompt);
+
+		state.StoryLog.Add(response);
+
+		return _trailingWhatDoYouDo.Replace(response, string.Empty);
+	}
+
 	private async Task UpdateKeyFactsAsync(GameState state, string userPrompt)
 	{
 		ArgumentNullException.ThrowIfNull(state);
@@ -98,12 +114,7 @@ public class GameEngine
 				return;
 			}
 
-			using var _ = JsonDocument.Parse(aiResponse);
-			state.KeyFacts = aiResponse;
-		}
-		catch (JsonException)
-		{
-			return;
+			state.ApplyKeyFacts(aiResponse);
 		}
 		catch (Exception ex)
 		{
