@@ -98,8 +98,14 @@ public class GameEngine
 				return;
 			}
 
-			using var _ = JsonDocument.Parse(aiResponse);
+			using var document = JsonDocument.Parse(aiResponse);
 			state.KeyFacts = aiResponse;
+
+			if (document.RootElement.TryGetProperty("dangerLevel", out var dangerLevelElement) &&
+				dangerLevelElement.GetString()?.Equals("critical", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				state.GameOver = true;
+			}
 		}
 		catch (JsonException)
 		{

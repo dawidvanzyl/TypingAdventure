@@ -28,7 +28,7 @@ public class GameEngineTests
 		state.StorySummary.Should().NotBeEmpty();
 		state.DetectedGenre.Should().Be(Genre.Fantasy);
 		fake.Calls.Should().HaveCount(4);
-		
+
 		var genreDetectionCall = fake.Calls[0];
 		genreDetectionCall.UserPrompt.Should().Contain("mystery");
 
@@ -38,7 +38,7 @@ public class GameEngineTests
 		var summaryCall = fake.Calls[2];
 		summaryCall.UserPrompt.Should().Contain("Summarise");
 		summaryCall.UserPrompt.Should().Contain("Generated premise");
-		
+
 		var keyFactsCall = fake.Calls[3];
 		keyFactsCall.UserPrompt.Should().Contain("Extract key facts from the following story");
 		keyFactsCall.UserPrompt.Should().Contain("Generated premise");
@@ -67,7 +67,7 @@ public class GameEngineTests
 
 		var keyFactsCall = fake.Calls[2];
 		keyFactsCall.UserPrompt.Should().Contain("Current key facts");
-		keyFactsCall.UserPrompt.Should().Contain(existingJson);
+		keyFactsCall.UserPrompt.Should().Contain("""{"setting":{"currentLocation":"Hall"}}""");
 		keyFactsCall.UserPrompt.Should().Contain("Turn response");
 		state.KeyFacts.Should().Contain("Library");
 	}
@@ -129,5 +129,68 @@ public class GameEngineTests
 		fake.FireAiCallPending();
 
 		eventFired.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task ApplyTurnAsync_WhenDangerLevelIsCritical_SetsGameOver()
+	{
+		var fake = new FakeAiClient();
+		var engine = new GameEngine(fake, new GenreDetector(fake));
+		var state = new GameState
+		{
+			Premise = "Premise",
+			StorySummary = "Summary",
+			KeyFacts = "{}"
+		};
+		state.StoryLog.Add("Premise");
+		fake.NextResponses.Enqueue("Turn response");
+		fake.NextResponses.Enqueue("Updated summary");
+		fake.NextResponses.Enqueue("""{"dangerLevel": "critical", "setting": {"currentLocation": "Abyss"}}""");
+
+		await engine.ApplyTurnAsync(state, "do nothing");
+
+		state.GameOver.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task ApplyTurnAsync_WhenDangerLevelIsHigh_DoesNotSetGameOver()
+	{
+		var fake = new FakeAiClient();
+		var engine = new GameEngine(fake, new GenreDetector(fake));
+		var state = new GameState
+		{
+			Premise = "Premise",
+			StorySummary = "Summary",
+			KeyFacts = "{}"
+		};
+		state.StoryLog.Add("Premise");
+		fake.NextResponses.Enqueue("Turn response");
+		fake.NextResponses.Enqueue("Updated summary");
+		fake.NextResponses.Enqueue("""{"dangerLevel": "high", "setting": {"currentLocation": "Ruins"}}""");
+
+		await engine.ApplyTurnAsync(state, "hesitate");
+
+		state.GameOver.Should().BeFalse();
+	}
+
+	[Fact]
+	public async Task ApplyTurnAsync_WhenDangerLevelIsCriticalButJsonInvalid_DoesNotSetGameOver()
+	{
+		var fake = new FakeAiClient();
+		var engine = new GameEngine(fake, new GenreDetector(fake));
+		var state = new GameState
+		{
+			Premise = "Premise",
+			StorySummary = "Summary",
+			KeyFacts = "{}"
+		};
+		state.StoryLog.Add("Premise");
+		fake.NextResponses.Enqueue("Turn response");
+		fake.NextResponses.Enqueue("Updated summary");
+		fake.NextResponses.Enqueue("not valid json at all");
+
+		await engine.ApplyTurnAsync(state, "do nothing");
+
+		state.GameOver.Should().BeFalse();
 	}
 }

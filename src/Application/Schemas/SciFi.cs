@@ -5,6 +5,7 @@ public static class SciFi
 	public static string Schema =>
 		"""
 		{
+		  "dangerLevel": "low | medium | high | critical",
 		  "setting": {
 		    "currentLocation": "string or null",
 		    "locationDescription": "string or null",
